@@ -15,13 +15,13 @@ async def start(message:types.Message):
         "меню",
         "🤓отзывы"
     }))
-@user_router.message(F.text == 'тг канал')
+@user_router.message(F.text.lower().contains('тг '))
 async def tgchennel(message: types.Message):
     await message.answer("Ссылочка внизу ⬇️", reply_markup=inkbcreate_url(btns={
         "нажми": "https://t.me/s/serega_pirat2"
     }))
 
-@user_router.message(F.text == 'отзывы')
+@user_router.message(F.text.lower().contains('отзывы'))
 async def otzivi(message: types.Message):
     await message.answer("https://vk.com/topic-214629131_49341013?offset=20", reply_markup=inkbcreate_url(btns={
         "Отзывы": "https://во-все-тяжкие.рф/episodes/3-season-10-series/"

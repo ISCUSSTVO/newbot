@@ -1,6 +1,6 @@
 from aiogram.types import InputMediaPhoto
 from sqlalchemy.ext.asyncio import AsyncSession
-from db.orm_query import orm_get_category, orm_get_banner, orm_check_catalog
+from db.orm_query import orm_get_banner, orm_check_catalog
 from inlinekeyboars.inline_kbcreate import back_kbds, get_user_main_btns
 
 
@@ -68,7 +68,7 @@ async def game_catalog(session: AsyncSession, game_cat: str, level):
     
     if banner:
         image = InputMediaPhoto(
-            media=banner.image,
+            media=banner.image,  
             caption=f"Игры:\n{games_list}",
             parse_mode='MarkdownV2'
         )
