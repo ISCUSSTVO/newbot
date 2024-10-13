@@ -19,6 +19,7 @@ class Catalog(Base):
 
     id: Mapped[int] = mapped_column(primary_key = True, autoincrement = True)
     description: Mapped[str] = mapped_column(String)
+    name: Mapped[str] = mapped_column(String(15), unique=True)
     price: Mapped[int]  = mapped_column(Integer)
 
 ##################таблица банеры ################################################################
