@@ -18,8 +18,9 @@ class Catalog(Base):
     __tablename__ = 'allacc'
 
     id: Mapped[int] = mapped_column(primary_key = True, autoincrement = True)
-    description: Mapped[str] = mapped_column(String)
     name: Mapped[str] = mapped_column(String(15), unique=True)
+    description: Mapped[str] = mapped_column(String)
+    categ: Mapped[str] = mapped_column(String(30), nullable=False)
     price: Mapped[int]  = mapped_column(Integer)
 
 ##################таблица банеры ################################################################

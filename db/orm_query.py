@@ -40,14 +40,28 @@ async def orm_check_catalog(session: AsyncSession):
     result = await session.execute(query)
     return result.scalars().all()
 
+async def orm_check_catalog_categ(session: AsyncSession):
+    query = select(Catalog.categ)
+    result = await session.execute(query)
+    return result.scalars().all()
+
+async def orm_get_category(session:AsyncSession, game_cat:str):
+    query = select(Catalog).where(Catalog.categ == game_cat)
+    result = await session.execute(query)
+    return result.scalars().all()
+
 async def orm_change_account(session: AsyncSession, account_name:str):
-    query = select(Catalog).where(Catalog.description == account_name)
+    query = select(Catalog).where(Catalog.name == account_name)
     result = await session.execute(query)
     return result.scalars().one_or_none()
 
+async def orm_select_tovar(session: AsyncSession, tovar:str):
+    query = select(Catalog).where(Catalog.name == tovar)
+    result = await session.execute(query)
+    return result.scalars().first()
 
 async def orm_del_account(session: AsyncSession, desc_name : str):
-    query = delete(Catalog).where(Catalog.description ==desc_name)
+    query = delete(Catalog).where(Catalog.name ==desc_name)
     result = await session.execute(query)
     return result
 

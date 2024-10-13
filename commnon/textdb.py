@@ -3,7 +3,6 @@ description_for_info_pages = {
     "main": "Добро пожаловать!",
     "about": "Вас приветствует магазин ...\nАвтовыдача после оплаты",
     "catalog": "Список всех аккаунтов",
-    "tgchanel": "Наш тг канал",
     "searchgame": "Игры",
     "payment": as_marked_section(
         Bold("Варианты оплаты:"),

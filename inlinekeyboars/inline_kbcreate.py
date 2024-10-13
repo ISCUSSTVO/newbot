@@ -66,8 +66,7 @@ def get_user_main_btns(*, level:int, sizes: tuple[int] = (2,)):
     keyboard = InlineKeyboardBuilder()
     btns = {
         "Каталог": "catalog",
-        "О нас ": "about",
-        "Оплата": "payment",
+        "Варианы оплаты": "payment",
         }
     for text, menu_name  in btns.items():
         if menu_name == 'catalog':
@@ -84,7 +83,7 @@ def get_user_main_btns(*, level:int, sizes: tuple[int] = (2,)):
 def back_kbds(
     *,
     level: int,
-    sizes: tuple[int] = (2, 1)
+    sizes: tuple[int] = (1)
 ):
     keyboard = InlineKeyboardBuilder()
     keyboard.add(InlineKeyboardButton(text='Назад',

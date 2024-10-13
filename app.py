@@ -17,7 +17,7 @@ from handlers.admin import admin_router
 bot = Bot(token=os.getenv('TOKEN'))
 dp = Dispatcher()
 
-dp.include_routers(admin_router,user_router)
+dp.include_routers(admin_router, user_router)
 
 async def on_startup():
     run_param = False

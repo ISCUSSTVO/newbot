@@ -2,7 +2,7 @@ from aiogram import types, Router, F
 from aiogram.filters import CommandStart
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from handlers.menu_proccesing import get_menu_content
+from handlers.menu_proccesing import game_catalog, get_menu_content, zaglushka
 #from aiogram.fsm.state import StatesGroup
 from inlinekeyboars.inline_kbcreate import Menucallback, get_keyboard,inkbcreate_url
 user_router = Router()
@@ -47,8 +47,23 @@ async def user_manu(callback: types.CallbackQuery, callback_data: Menucallback, 
     await callback.message.edit_media(media=media, reply_markup=reply_markup)
     await callback.answer()
 
+@user_router.callback_query(F.data.startswith('show_cat_'))
+async def process_show_cat(callback_query: types.CallbackQuery, session: AsyncSession):
+    # Извлекаем категорию из колбек-данных
+    game_cat = callback_query.data.split('_')[-1]  # Получаем название категории
+    media, kbds = await game_catalog(session, game_cat, level=2)
+    # Отправляем сообщение пользователю
+    await callback_query.message.edit_media(media=media, reply_markup=kbds)
+    await callback_query.answer()
 
-
+@user_router.callback_query(F.data.startswith('show_'))
+async def process_show_game(callback_query: types.CallbackQuery, session: AsyncSession):
+    # Извлекаем категорию из колбек-данных
+    tovar = callback_query.data.split('_')[-1]  # Получаем название категории
+    media, kbds = await zaglushka(session, tovar, level=3)
+    # Отправляем сообщение пользователю
+    await callback_query.message.edit_media(media=media, reply_markup=kbds)
+    await callback_query.answer()
 
 @user_router.message()
 async def nullmessage(message: types.Message):
