@@ -2,7 +2,7 @@ from aiogram import types, Router, F
 from aiogram.filters import StateFilter, Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
-from db.models import Admins, Catalog
+from db.models import Admins, Promokodes, Catalog
 from db.orm_query import orm_change_account, orm_change_banner_image, orm_check_catalog, orm_del_account, orm_for_ETA,orm_get_info_pages, orm_update_catalog, orm_use_admin
 from sqlalchemy.ext.asyncio import AsyncSession
 from inlinekeyboars.inline_kbcreate import inkbcreate
@@ -46,7 +46,9 @@ async def admin_commands_cb(callback: types.CallbackQuery):
         'Админ меню', reply_markup=inkbcreate(btns={
             'Внести товар в каталог': 'AddItem',
             'Удалить/изменить товар в каталоге': 'delItem',
-            'Добавить/изменить банер':  'banner'
+            'Добавить/изменить банер':  'banner',
+            'Создать рассылочное сообщение':    'create_rassilka',
+            'отправить рассылку':   'do_rassilka'
         })
     )
 
@@ -62,7 +64,8 @@ async def admin_commands_msg(message: types.Message, session: AsyncSession):
                 'Админ меню', reply_markup=inkbcreate(btns={
                 'Внести товар в каталог': 'AddItem',
                 'Удалить/изменить товар в каталоге': 'delItem',
-                'Добавить/изменить банер':  'banner'
+                'Добавить/изменить банер':  'banner',
+                'Создать промокод': 'promocode'
                 }))
         await message.delete()
     else:
@@ -102,6 +105,42 @@ async def add_banner1(message: types.Message, state: FSMContext, session: AsyncS
 @admin_router.message(AddBanner.image)
 async def add_banner2(message: types.Message):
     await message.answer("Отправьте фото баннера или напишите отмена")
+###############################################################################
+class GetPromocode(StatesGroup):
+    Promo = State()
+    Disk = State()
+
+@admin_router.callback_query(StateFilter(None),F.data == ('promocode'))
+async def chek_promocode1(callback:types.CallbackQuery, state:FSMContext):
+    await callback.message.answer("Введите промокод")
+    await state.set_state(GetPromocode.Promo)
+
+@admin_router.message(GetPromocode.Promo)
+async def get_sam_promocode(message:types.Message,state: FSMContext):
+    await state.update_data(promo = message.text)
+    await message.answer("введи скидку промокода")
+    await state.set_state(GetPromocode.Disk)
+    
+    
+@admin_router.message(GetPromocode.Disk)
+async def get_diskount(message: types.Message, session: AsyncSession, state: FSMContext,):
+    await state.update_data(disc = message.text)
+    data = await state.get_data()
+    qwe = Promokodes(
+        promocode = data['promo'],
+        discount = data['disc']
+    )
+    session.add(qwe)
+    promo = data['promo']
+    await session.commit()
+    await state.clear()
+    await message.answer(
+    f'Промокод принят: {promo}',
+        reply_markup=inkbcreate(btns={
+            'Ещё промокод?': 'promokod',
+            'Админ меню': 'admin'
+        })
+    )
 
 ##################Добавление аккаунта################################################################
 class PlussAccount(StatesGroup):

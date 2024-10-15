@@ -1,6 +1,6 @@
 from sqlalchemy import delete, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
-from db.models import Catalog, Admins, Banner
+from db.models import Catalog, Admins, Banner, Promokodes
 
 ############### Работа с баннерами (информационными страницами) ###############
 
@@ -37,6 +37,11 @@ async def orm_get_info_pages(session: AsyncSession):
 
 async def orm_check_catalog(session: AsyncSession):
     query = select(Catalog)
+    result = await session.execute(query)
+    return result.scalars().all()
+
+async def orm_chek_promo(session: AsyncSession, promo:str):
+    query = select(Promokodes).where(Promokodes.promocode == promo)
     result = await session.execute(query)
     return result.scalars().all()
 

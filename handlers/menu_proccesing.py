@@ -1,4 +1,4 @@
-from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto
+from aiogram.types import InputMediaPhoto
 from sqlalchemy.ext.asyncio import AsyncSession
 from db.orm_query import orm_get_banner, orm_check_catalog, orm_get_category, orm_select_tovar
 from inlinekeyboars.inline_kbcreate import Menucallback, get_user_main_btns, inkbcreate
@@ -32,6 +32,7 @@ async def categ(session):
     # Создаем кнопки с названиями игр
     game_buttons = []
     game_count = {}
+
     for account in accounts:
         game_cat = account.categ
         if game_cat in game_count:
@@ -53,12 +54,12 @@ async def categ(session):
     return image, kbds
 
 
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-
 async def game_catalog(session: AsyncSession, game_cat: str, level):
     banner = await orm_get_banner(session, "catalog")
+    # Получаем игры по категории из базы данных
     games = await orm_get_category(session, game_cat)
-
+    # Формируем список игр для отображения
+    
     if banner:
         image = InputMediaPhoto(
             media=banner.image,
@@ -66,9 +67,7 @@ async def game_catalog(session: AsyncSession, game_cat: str, level):
         )
     else:
         image = None
-
     game_count = {}
-    inline_keyboard = []
 
     for game in games:
         game_name = game.name
@@ -76,16 +75,17 @@ async def game_catalog(session: AsyncSession, game_cat: str, level):
             game_count[game_name] += 1
         else:
             game_count[game_name] = 1
-            
+
+
     for game_name in game_count:
-        inline_keyboard.append([InlineKeyboardButton(text=game_name, callback_data=f'show_{game_name}')])
+        kbds = inkbcreate(btns={
+            f"{game_name}": f'show_{game_name}',
+            "назад":   Menucallback(level=level -1, menu_name='catalog').pack()
+        })
 
-    inline_keyboard.append([InlineKeyboardButton(text="Назад", callback_data=Menucallback(level=level - 1, menu_name='catalog').pack())])
-
-    # Создаем экземпляр клавиатуры
-    kbds = InlineKeyboardMarkup(inline_keyboard=inline_keyboard)
 
     return image, kbds
+
 
 async def zaglushka(session:AsyncSession, tovar : str, level):
     banner = await orm_get_banner(session, "searchgame")
@@ -102,11 +102,12 @@ async def zaglushka(session:AsyncSession, tovar : str, level):
     
     kbds = inkbcreate(btns={
         "купить": "qwe",
-        "Есть промокод?":   "promokod",
-        "Назад":    Menucallback(level=level -1, menu_name='game_catalog').pack()
+        "Есть промокод?":   "promo",
+        "Назад":    Menucallback(level=level -2, menu_name='game_catalog').pack()
     })
     
     return image, kbds
+
 
 
 
