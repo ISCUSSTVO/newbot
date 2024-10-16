@@ -1,6 +1,6 @@
 from sqlalchemy import delete, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
-from db.models import Catalog, Admins, Banner, Promokodes
+from db.models import Catalog, Admins, Banner, Promokodes, Spam, Users
 
 ############### Работа с баннерами (информационными страницами) ###############
 
@@ -45,6 +45,16 @@ async def orm_chek_promo(session: AsyncSession, promo:str):
     result = await session.execute(query)
     return result.scalars().all()
 
+async def orm_chek_users(session:AsyncSession, useid: str):
+    query = select(Users).where(Users.user_id == useid)
+    result  = await session.execute(query)
+    return result.scalars().all()
+
+async def orm_chek_users1(session:AsyncSession):
+    query = select(Users.user_id)
+    result  = await session.execute(query)
+    return result.scalars().all()
+
 async def orm_check_catalog_categ(session: AsyncSession):
     query = select(Catalog.categ)
     result = await session.execute(query)
@@ -54,6 +64,11 @@ async def orm_get_category(session:AsyncSession, game_cat:str):
     query = select(Catalog).where(Catalog.categ == game_cat)
     result = await session.execute(query)
     return result.scalars().all()
+
+async def orm_get_spam(session:AsyncSession):
+    query = select(Spam.smska)
+    result = await session.execute(query)
+    return result.scalars().first()
 
 async def orm_change_account(session: AsyncSession, account_name:str):
     query = select(Catalog).where(Catalog.name == account_name)

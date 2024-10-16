@@ -1,16 +1,17 @@
-from aiogram import types, Router, F
+import os
+from aiogram import types, Router, F,Bot
 from aiogram.filters import StateFilter, Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
-from db.models import Admins, Promokodes, Catalog
-from db.orm_query import orm_change_account, orm_change_banner_image, orm_check_catalog, orm_del_account, orm_for_ETA,orm_get_info_pages, orm_update_catalog, orm_use_admin
+from db.models import Admins, Promokodes, Catalog, Spam
+from db.orm_query import orm_change_account, orm_change_banner_image, orm_check_catalog, orm_chek_users1, orm_del_account, orm_for_ETA,orm_get_info_pages, orm_get_spam, orm_update_catalog, orm_use_admin
 from sqlalchemy.ext.asyncio import AsyncSession
 from inlinekeyboars.inline_kbcreate import inkbcreate
 
 admin_router = Router()
 admin_list = ['civqw']
 
-
+bot = Bot(token=os.getenv('TOKEN'))
 
 
 
@@ -47,8 +48,8 @@ async def admin_commands_cb(callback: types.CallbackQuery):
             'Внести товар в каталог': 'AddItem',
             'Удалить/изменить товар в каталоге': 'delItem',
             'Добавить/изменить банер':  'banner',
-            'Создать рассылочное сообщение':    'create_rassilka',
-            'отправить рассылку':   'do_rassilka'
+            'Создать промокод': 'promocode',
+            'Создать/запустить спам рассылку':  'spamrassilka'
         })
     )
 
@@ -65,7 +66,8 @@ async def admin_commands_msg(message: types.Message, session: AsyncSession):
                 'Внести товар в каталог': 'AddItem',
                 'Удалить/изменить товар в каталоге': 'delItem',
                 'Добавить/изменить банер':  'banner',
-                'Создать промокод': 'promocode'
+                'Создать промокод': 'promocode',
+                'Создать/запустить спам рассылку':  'spamrassilka'
                 }))
         await message.delete()
     else:
@@ -73,6 +75,53 @@ async def admin_commands_msg(message: types.Message, session: AsyncSession):
             'ты не админ'
         )
         await message.delete()
+####################################Рассылка####################################
+class CreateMessage(StatesGroup):
+    msgg = State()
+
+@admin_router.callback_query(F.data == ('spamrassilka'))
+async def choosevar(callback : types.CallbackQuery):
+    await callback.message.answer(
+                'Выбирай', reply_markup=inkbcreate(btns={
+                'Создать сообщение': 'create_msg',
+                'Запустить рассылку': 'do_rassilka',
+                }))
+    await callback.message.delete()
+
+@admin_router.callback_query(F.data == ('create_msg'))
+async def create_msg(callback : types.CallbackQuery, state: FSMContext):
+    await callback.message.answer('Введите сообщение для рассылки')
+    await state.set_state(CreateMessage.msgg)
+
+@admin_router.message(CreateMessage.msgg)
+async def createspam(message:types.Message,session:AsyncSession):
+    qwe = message.text
+    result = Spam(
+        smska = qwe
+    )
+    session.add(result)
+    await session.commit()
+    await message.answer(f"Сообщение принято\n{qwe}",reply_markup=inkbcreate(btns={
+        "В меню":   "admin"
+    }))
+
+@admin_router.callback_query(F.data == ('do_rassilka'))
+async def read_msg(callback : types.CallbackQuery, session:AsyncSession):
+    users = await orm_chek_users1(session)
+    msg = await orm_get_spam(session)
+    print(f"Список пользователей: {users}")
+    print(f"Сообщение для рассылки: {msg}")
+    if msg:
+        for user_id in users:
+            try:
+                await bot.send_message(user_id, msg)
+            except Exception as e:
+                print(f"Ошибка при отправке сообщения пользователю {user_id}: {e}")
+        await callback.message.answer("Рассылка завершена.")
+    else:
+        await callback.message.answer("Нет доступных сообщений для рассылки.")
+
+
 
 ################# Микро FSM для загрузки/изменения баннеров ############################
 class AddBanner(StatesGroup):
@@ -110,7 +159,7 @@ class GetPromocode(StatesGroup):
     Promo = State()
     Disk = State()
 
-@admin_router.callback_query(StateFilter(None),F.data == ('promocode'))
+@admin_router.callback_query(F.data == ('promocode'))
 async def chek_promocode1(callback:types.CallbackQuery, state:FSMContext):
     await callback.message.answer("Введите промокод")
     await state.set_state(GetPromocode.Promo)

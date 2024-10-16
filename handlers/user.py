@@ -5,26 +5,38 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.filters import CommandStart
 from sqlalchemy.ext.asyncio import AsyncSession
 from db.models import Users
-from db.orm_query import orm_chek_promo, orm_get_banner
+from db.engine import AsyncSessionLocal
+from db.orm_query import orm_chek_promo, orm_chek_users, orm_get_banner
 from handlers.menu_proccesing import game_catalog, get_menu_content, zaglushka
 #from aiogram.fsm.state import StatesGroup
 from inlinekeyboars.inline_kbcreate import Menucallback, get_keyboard, inkbcreate,inkbcreate_url
 user_router = Router()
 
+
+
+
+
+
+
 @user_router.message(F.text.lower().contains('start') | F.text.lower().contains('старт'))
 @user_router.message(CommandStart())
-async def start(message:types.Message, session:AsyncSession):
-    op = message.from_user.id
-    add_in_Users = Users(
-        user_id = op
-    )
-    session.add(add_in_Users)
-    await session.commit()
-    await message.answer('qwe', reply_markup=get_keyboard(btns={
-        "тг канал📺",
-        "меню",
-        "🤓отзывы"
-    }))
+async def start(message:types.Message):
+    async with AsyncSessionLocal as session:
+        useid = message.from_user.id
+        banner = await orm_get_banner(session, "start")
+        result = await orm_chek_users(session, useid)
+
+        if not result:
+            add_in_Users = Users(user_id=useid)
+            session.add(add_in_Users)
+            await session.commit()
+        
+        kbds = get_keyboard(btns={
+            "тг канал📺",
+            "меню",
+            "🤓отзывы"
+        })      
+        await message.answer_photo(photo=banner.image, caption=banner.description, reply_markup=kbds)
 
 @user_router.message(F.text.lower().contains('тг '))
 async def tgchennel(message: types.Message):

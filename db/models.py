@@ -10,13 +10,19 @@ class Admins(Base):
     __tablename__ = 'admins'
 
     id: Mapped[int] = mapped_column(primary_key = True, autoincrement = True)
-    user_id: Mapped[str] = mapped_column(String)
+    usernameadm: Mapped[str] = mapped_column(String)
 ##################Дтаблица Юзеров################################################################
 class Users(Base):
     __tablename__ = 'users'
 
     id: Mapped[int] = mapped_column(primary_key = True, autoincrement = True)
-    usernameadm: Mapped[str] = mapped_column(String)
+    user_id: Mapped[str] = mapped_column(String)
+##################Дтаблица Юзеров################################################################
+class Spam(Base):
+    __tablename__ = 'rassilka'
+
+    id: Mapped[int] = mapped_column(primary_key = True, autoincrement = True)
+    smska: Mapped[str] = mapped_column(String)
 ##################таблица аккаунтов################################################################
 class Catalog(Base):
     __tablename__ = 'allacc'

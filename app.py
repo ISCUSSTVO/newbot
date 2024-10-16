@@ -38,6 +38,7 @@ async def on_shutdown():
 
 
 async def main():
+    
     dp.update.middleware(DataBaseSession(session_pool=session_maker))
     dp.startup.register(on_startup)
     dp.shutdown.register(on_shutdown)
