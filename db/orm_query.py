@@ -85,6 +85,11 @@ async def orm_del_account(session: AsyncSession, desc_name : str):
     result = await session.execute(query)
     return result
 
+async def orm_chng_spam(session:AsyncSession, op:str):
+    query = update(Spam.smska).values(op)
+    result = await session.execute(query)
+    return result.scalar_one()
+
 async def orm_del_admin(session: AsyncSession, username_to_delete : str):
     query = delete(Admins).where(Admins.usernameadm == username_to_delete)
     result = await session.execute(query)

@@ -4,7 +4,7 @@ from aiogram.filters import StateFilter, Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from db.models import Admins, Promokodes, Catalog, Spam
-from db.orm_query import orm_change_account, orm_change_banner_image, orm_check_catalog, orm_chek_users1, orm_del_account, orm_for_ETA,orm_get_info_pages, orm_get_spam, orm_update_catalog, orm_use_admin
+from db.orm_query import orm_change_account, orm_change_banner_image, orm_check_catalog, orm_chek_users1, orm_chng_spam, orm_del_account, orm_for_ETA,orm_get_info_pages, orm_get_spam, orm_update_catalog, orm_use_admin
 from sqlalchemy.ext.asyncio import AsyncSession
 from inlinekeyboars.inline_kbcreate import inkbcreate
 
@@ -29,16 +29,24 @@ async def Evry_Time_Adm(message: types.Message, session: AsyncSession):
             session.add(new_admin)
             await session.commit()
             await message.answer(
-                'Ты теперь админ'
+                'Ты теперь админ', reply_markup=inkbcreate(btns={
+                'Внести товар в каталог': 'AddItem',
+                'Удалить/изменить товар в каталоге': 'delItem',
+                'Добавить/изменить банер':  'banner',
+                'Создать промокод': 'promocode',
+                'Создать/запустить спам рассылку':  'spamrassilka'})
             )
+            await message.delete()
         else:
             await message.answer(
                 'Ты и так админ '
         )
+            await message.delete()
     else:
         await message.reply(
             'ты не админ'
         )
+        await message.delete()
 ####################################АДМ МЕНЮ КОЛЛБЕК####################################
 
 @admin_router.callback_query(F.data==('admin'))
@@ -79,11 +87,17 @@ async def admin_commands_msg(message: types.Message, session: AsyncSession):
 class CreateMessage(StatesGroup):
     msgg = State()
 
+    texts = {
+    'CreateMessage.msgg':    'Введи сообщение заново',
+    }
+
 @admin_router.callback_query(F.data == ('spamrassilka'))
 async def choosevar(callback : types.CallbackQuery):
     await callback.message.answer(
                 'Выбирай', reply_markup=inkbcreate(btns={
                 'Создать сообщение': 'create_msg',
+                'Изменить сообщение':   'redo_msg',
+                'Удалить сообщение'
                 'Запустить рассылку': 'do_rassilka',
                 }))
     await callback.message.delete()
@@ -104,23 +118,42 @@ async def createspam(message:types.Message,session:AsyncSession):
     await message.answer(f"Сообщение принято\n{qwe}",reply_markup=inkbcreate(btns={
         "В меню":   "admin"
     }))
+    await message.delete()
+
+@admin_router.callback_query(F.data == ('redo_msg'))
+async def redo_msg(callback: types.CallbackQuery, state: FSMContext):    
+    await callback.message.answer('Введи смску заново')
+    await state.set_state(CreateMessage.msgg)
+
+@admin_router.message(CreateMessage.msgg)
+async def rez_msg(message: types.Message, session:AsyncSession):   
+    op = message.text 
+    result = await orm_chng_spam(session, op)
+    for qwe in result:
+        print(qwe)
+        await message.answer(f'смска принята\n{op}')
+
 
 @admin_router.callback_query(F.data == ('do_rassilka'))
-async def read_msg(callback : types.CallbackQuery, session:AsyncSession):
+async def read_msg(callback: types.CallbackQuery, session: AsyncSession):
     users = await orm_chek_users1(session)
     msg = await orm_get_spam(session)
-    print(f"Список пользователей: {users}")
-    print(f"Сообщение для рассылки: {msg}")
+    #print(f"Список пользователей: {users}")
+    #print(f"Сообщение для рассылки: {msg}")
+    
     if msg:
         for user_id in users:
-            try:
-                await bot.send_message(user_id, msg)
-            except Exception as e:
-                print(f"Ошибка при отправке сообщения пользователю {user_id}: {e}")
+            #print(f"Проверяем пользователя: {user_id}, инициатор: {callback.from_user.id}")
+            if user_id != callback.from_user.id:  # Проверка, чтобы не отправлять себе
+                try:
+                    await bot.send_message(user_id, msg)
+                except Exception as e:
+                    print(f"Ошибка при отправке сообщения пользователю {user_id}: {e}")
         await callback.message.answer("Рассылка завершена.")
+        await callback.answer()
     else:
         await callback.message.answer("Нет доступных сообщений для рассылки.")
-
+        await callback.answer()
 
 
 ################# Микро FSM для загрузки/изменения баннеров ############################
@@ -197,13 +230,13 @@ class PlussAccount(StatesGroup):
     desc = State()
     categories = State()
     price = State()
-
+#
     texts = {
         'PlussAccount.name':    'Введите название заново',
         'PlussAccount.desc':    'Введите описание заново',
         'PlussAccount.categories':  'Введите категорию заново',
         'PlussAccount.priceacc':    'Введите цену заново',
-    }
+    }  
 
 @admin_router.callback_query(F.data == ('AddItem'))
 async def add_account(callback: types.CallbackQuery, state: FSMContext):
